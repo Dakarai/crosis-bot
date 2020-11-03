@@ -2,7 +2,8 @@ import discord
 
 if __name__ == '__main__':
 
-    client = discord.Client()
+    intents = discord.Intents.all()
+    client = discord.Client(intents=intents)
 
 
     @client.event
@@ -19,6 +20,20 @@ if __name__ == '__main__':
         if 'crosisbot.member_count' == message.content.lower():
             await message.channel.send(f'```{guild.member_count}```')
 
+        elif 'crosisbot.community_report' == message.content.lower():
+            online = 0
+            idle = 0
+            offline = 0
+
+            for m in guild.members:
+                if str(m.status) == "online":
+                    online += 1
+                if str(m.status) == "offline":
+                    offline += 1
+                else:
+                    idle += 1
+
+            await message.channel.send(f"```Online: {online}.\nIdle: {idle}.\nOffline: {offline}```")
 
     token = input("Token: ")
     client.run(token)
