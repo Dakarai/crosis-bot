@@ -4,6 +4,7 @@ if __name__ == '__main__':
 
     intents = discord.Intents.all()
     client = discord.Client(intents=intents)
+    token = open("token.txt", "r").read()
 
 
     @client.event
@@ -33,7 +34,13 @@ if __name__ == '__main__':
                 else:
                     idle += 1
 
-            await message.channel.send(f"```Online: {online}.\nIdle: {idle}.\nOffline: {offline}```")
+            await message.channel.send(f"```Online: {online}\nIdle: {idle}\nOffline: {offline}```")
 
-    token = input("Token: ")
+
+        elif 'crosisbot.ping' == message.content.lower():
+            author = message.author
+            out = author.mention
+            await message.channel.send(f'{out} Kappa')
+
+    #token = input("Token: ")
     client.run(token)
