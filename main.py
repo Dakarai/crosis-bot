@@ -25,7 +25,6 @@ if __name__ == '__main__':
             online = 0
             idle = 0
             offline = 0
-
             for m in guild.members:
                 if str(m.status) == "online":
                     online += 1
@@ -33,14 +32,24 @@ if __name__ == '__main__':
                     offline += 1
                 else:
                     idle += 1
-
             await message.channel.send(f"```Online: {online}\nIdle: {idle}\nOffline: {offline}```")
 
-
         elif 'crosisbot.ping' == message.content.lower():
-            author = message.author
-            out = author.mention
-            await message.channel.send(f'{out} Kappa')
+            await message.channel.send(f'{message.author.mention} <:Krappa:370365085576724482>')
 
-    #token = input("Token: ")
+        elif 'crosisbot.emojis' == message.content.lower():
+            if message.author.id != 117928787747799049:
+                await message.channel.send('This is only available to bot administrators.')
+            else:
+                for emoji in guild.emojis:
+                    print(emoji.name, emoji.id, emoji.require_colons)
+
+        elif 'crosisbot.message_count' == message.content.lower():
+            counter = 0
+            async for history_message in message.channel.history(limit=None): #don't actually use None
+                if message.author == history_message.author:
+                    counter += 1
+            await message.channel.send(f'{message.author.mention} has published {counter} messages in this channel'
+                                       f'<:yikes:325990368879312897>')
+
     client.run(token)
