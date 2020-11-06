@@ -2,6 +2,11 @@ import discord
 import asyncio
 import time
 
+import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib import style
+style.use('fivethirtyeight')
+
 if __name__ == '__main__':
 
     intents = discord.Intents.all()
@@ -31,10 +36,24 @@ if __name__ == '__main__':
                 online, idle, offline = community_report(cur_guild)
                 with open('user_metrics.csv', 'a') as f:
                     f.write(f'{int(time.time())},{online},{idle},{offline}\n')
-                await asyncio.sleep(60)
+
+                plt.clf()
+                df = pd.read_csv('user_metrics.csv', names=['time', 'online', 'idle', 'offline'])
+                df['date'] = pd.to_datetime(df['time'], unit='s', utc=True)
+                df['total'] = df['online'] + df['offline'] + df['idle']
+                df.drop('time', 1, inplace=True)
+                df.set_index('date', inplace=True)
+                df['online'].plot()
+                df['idle'].plot()
+                df['offline'].plot()
+                plt.legend()
+                plt.savefig('online.png')
+
+                await asyncio.sleep(5)
+
             except Exception as e:
                 print(str(e))
-                await asyncio.sleep(60)
+                await asyncio.sleep(5)
 
 
     @client.event
@@ -56,6 +75,9 @@ if __name__ == '__main__':
         elif 'crosisbot.community_report' == message.content.lower():
             online, idle, offline = community_report(cur_guild)
             await message.channel.send(f"```Online: {online}\nIdle: {idle}\nOffline: {offline}```")
+
+            file = discord.File('online.png', filename='online.png')
+            await message.channel.send(file=file)
 
         elif 'crosisbot.ping' == message.content.lower():
             await message.channel.send(f'{message.author.mention} <:Krappa:370365085576724482>')
