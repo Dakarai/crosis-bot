@@ -1,6 +1,7 @@
 import discord
 import asyncio
 import time
+import pymongo
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -12,6 +13,7 @@ if __name__ == '__main__':
     intents = discord.Intents.all()
     client = discord.Client(intents=intents)
     token = open("token.txt", "r").read()
+    mongo_client = pymongo.MongoClient('mongodb://127.0.0.1:27017')
 
     def community_report(guild):
         online = 0
@@ -25,6 +27,27 @@ if __name__ == '__main__':
             else:
                 idle += 1
         return online, idle, offline
+
+
+    def log_message(message):
+        global mongo_db
+        mongo_db['messages'].insert_one({
+            '_id':  message.id,
+            #'tts':  message.tts,
+            #'type': message.type,
+            'author': message.author.name,
+            'author_id': message.author.id,
+            'content': message.content,
+            #'embeds': message.embeds,
+            'channel': message.channel.name,
+            #'mentions_everyone': message.mention_everyone,
+            #'mentions': message.mentions,
+            #'channel_mentions': message.channel_mentions,
+            #'role_mentions': message.role_mentions,
+            #'attachments': message.attachments,
+            'guild': message.guild.name,
+            #'posted_time': message.created_at.strftime("%m/%d/%Y, %H:%M:%S")
+        })
 
 
     async def user_metrics_background_task():
@@ -58,16 +81,19 @@ if __name__ == '__main__':
 
     @client.event
     async def on_ready():
-        global cur_guild
+        global cur_guild, mongo_db
         cur_guild = client.get_guild(135136943179563008)
         print(f'We have logged in as {client.user}')
         print(f'Logged into {client.get_guild(135136943179563008)}')
 
+        mongo_db = mongo_client[str(cur_guild.id)]
+        print(f'We have connected to database {mongo_db}')
 
     @client.event
     async def on_message(message):
         global cur_guild
         print(f'{message.channel}: {message.author}: {message.author.name}: {message.content}')
+        log_message(message)
 
         if 'crosisbot.member_count' == message.content.lower():
             await message.channel.send(f'```{cur_guild.member_count}```')
@@ -96,6 +122,17 @@ if __name__ == '__main__':
                     counter += 1
             await message.channel.send(f'{message.author.mention} has published {counter} messages in this channel'
                                        f'<:yikes:325990368879312897>')
+
+        elif 'crosisbot.message_backfill' == message.content.lower():
+            if message.author.id != 117928787747799049:
+                await message.channel.send('This is only available to bot administrators.')
+            else:
+                async for history_message in message.channel.history(limit=None):
+                    try:
+                        log_message(history_message)
+                    except Exception as e:
+                        print(e)
+
 
     client.loop.create_task(user_metrics_background_task())
     client.run(token)
