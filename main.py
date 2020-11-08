@@ -129,7 +129,7 @@ if __name__ == '__main__':
             else:
                 limit_to_backfill = None
                 temp = message.content.lower().split()
-                if temp[1] is not None:
+                if len(temp) == 2:
                     if temp[1].isdigit() and int(temp[1]) > 0:
                         limit_to_backfill = int(temp[1])
                 async for history_message in message.channel.history(limit=limit_to_backfill):
