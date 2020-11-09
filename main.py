@@ -94,6 +94,7 @@ if __name__ == '__main__':
         global cur_guild
         print(f'{message.channel}: {message.author}: {message.author.name}: {message.content}')
         log_message(message)
+        # await message.add_reaction(client.get_emoji(370365085576724482))
 
         if 'crosisbot.member_count' == message.content.lower():
             await message.channel.send(f'```{cur_guild.member_count}```')
