@@ -72,7 +72,7 @@ if __name__ == '__main__':
                     df['idle'].plot()
                     df['offline'].plot()
                     plt.legend()
-                    plt.savefig('online.png')
+                    plt.savefig(f'{guild_name}_online.png')
 
                     await asyncio.sleep(5)
 
