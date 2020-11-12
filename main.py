@@ -15,6 +15,8 @@ if __name__ == '__main__':
     token = open("token.txt", "r").read()
     mongo_client = pymongo.MongoClient('mongodb://127.0.0.1:27017')
 
+    ME = 117928787747799049
+
     def community_report(guild):
         online = 0
         idle = 0
@@ -110,7 +112,7 @@ if __name__ == '__main__':
             await message.channel.send(f'{message.author.mention} <:Krappa:370365085576724482>')
 
         elif 'crosisbot.emojis' == message.content.lower():
-            if message.author.id != 117928787747799049:
+            if message.author.id != ME:
                 await message.channel.send('This is only available to bot administrators.')
             else:
                 for emoji in cur_guild.emojis:
@@ -125,7 +127,7 @@ if __name__ == '__main__':
                                        f'<:yikes:325990368879312897>')
 
         elif 'crosisbot.message_backfill' in message.content.lower():
-            if message.author.id != 117928787747799049:
+            if message.author.id != ME:
                 await message.channel.send('This is only available to bot administrators.')
             else:
                 limit_to_backfill = None
