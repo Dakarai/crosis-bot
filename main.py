@@ -32,8 +32,7 @@ if __name__ == '__main__':
 
 
     def log_message(message):
-        global mongo_db
-        mongo_db['messages'].insert_one({
+        mongo_client[str(message.guild.id)]['messages'].insert_one({
             '_id':  message.id,
             #'tts':  message.tts,
             #'type': message.type,
@@ -54,27 +53,28 @@ if __name__ == '__main__':
 
     async def user_metrics_background_task():
         await client.wait_until_ready()
-        global cur_guild
 
         while not client.is_closed():
             try:
-                online, idle, offline = community_report(cur_guild)
-                with open('user_metrics.csv', 'a') as f:
-                    f.write(f'{int(time.time())},{online},{idle},{offline}\n')
+                for guild in client.guilds:
+                    online, idle, offline = community_report(guild)
+                    guild_name = guild.name.replace(" ", "_")
+                    with open(f'{guild_name}_user_metrics.csv', 'a') as f:
+                        f.write(f'{int(time.time())},{online},{idle},{offline}\n')
 
-                plt.clf()
-                df = pd.read_csv('user_metrics.csv', names=['time', 'online', 'idle', 'offline'])
-                df['date'] = pd.to_datetime(df['time'], unit='s', utc=True)
-                df['total'] = df['online'] + df['offline'] + df['idle']
-                df.drop('time', 1, inplace=True)
-                df.set_index('date', inplace=True)
-                df['online'].plot()
-                df['idle'].plot()
-                df['offline'].plot()
-                plt.legend()
-                plt.savefig('online.png')
+                    plt.clf()
+                    df = pd.read_csv(f'{guild_name}_user_metrics.csv', names=['time', 'online', 'idle', 'offline'])
+                    df['date'] = pd.to_datetime(df['time'], unit='s', utc=True)
+                    df['total'] = df['online'] + df['offline'] + df['idle']
+                    df.drop('time', 1, inplace=True)
+                    df.set_index('date', inplace=True)
+                    df['online'].plot()
+                    df['idle'].plot()
+                    df['offline'].plot()
+                    plt.legend()
+                    plt.savefig('online.png')
 
-                await asyncio.sleep(5)
+                    await asyncio.sleep(5)
 
             except Exception as e:
                 print(str(e))
@@ -83,26 +83,22 @@ if __name__ == '__main__':
 
     @client.event
     async def on_ready():
-        global cur_guild, mongo_db
-        cur_guild = client.get_guild(135136943179563008)
         print(f'We have logged in as {client.user}')
-        print(f'Logged into {client.get_guild(135136943179563008)}')
+        for guild in client.guilds:
+            print(f'Logged into {guild.name}')
 
-        mongo_db = mongo_client[str(cur_guild.id)]
-        print(f'We have connected to database {mongo_db}')
 
     @client.event
     async def on_message(message):
-        global cur_guild
-        print(f'{message.channel}: {message.author}: {message.author.name}: {message.content}')
+        print(f'{message.guild.name}: {message.channel}: {message.author}: {message.author.name}: {message.content}')
         log_message(message)
         # await message.add_reaction(client.get_emoji(370365085576724482))
 
         if 'crosisbot.member_count' == message.content.lower():
-            await message.channel.send(f'```{cur_guild.member_count}```')
+            await message.channel.send(f'```{message.guild.member_count}```')
 
         elif 'crosisbot.community_report' == message.content.lower():
-            online, idle, offline = community_report(cur_guild)
+            online, idle, offline = community_report(message.guild)
             await message.channel.send(f"```Online: {online}\nIdle: {idle}\nOffline: {offline}```")
 
             file = discord.File('online.png', filename='online.png')
@@ -115,7 +111,7 @@ if __name__ == '__main__':
             if message.author.id != ME:
                 await message.channel.send('This is only available to bot administrators.')
             else:
-                for emoji in cur_guild.emojis:
+                for emoji in message.guild.emojis:
                     print(emoji.name, emoji.id, emoji.require_colons)
 
         elif 'crosisbot.message_count' == message.content.lower():
